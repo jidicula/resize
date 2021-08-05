@@ -59,10 +59,15 @@ func main() {
 	reader, err := os.Open(inputFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(2)
 	}
 	defer reader.Close()
 
 	m, _, err := image.Decode(reader)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(3)
+	}
 	bounds := m.Bounds()
 
 	maxY := bounds.Max.Y
@@ -84,11 +89,13 @@ func main() {
 	f, err := os.Create(outputFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(4)
 	}
 	defer f.Close()
 
 	err = png.Encode(f, newImage)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(5)
 	}
 }

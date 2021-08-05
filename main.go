@@ -28,13 +28,17 @@ Examples:
 
 Options:
   --factor (-f) Resize factor.
+  --concurrent (-c) Resize concurrently.
   --help (-h) Prints this message.
+
 `
 
 var factor int
+var concurrent bool
 
 func init() {
 	flag.IntVarP(&factor, "factor", "f", 1, "Resize factor.")
+	flag.BoolVarP(&concurrent, "concurrent", "c", false, "Resize concurrently.")
 }
 
 func main() {
@@ -76,14 +80,11 @@ func main() {
 	newMaxY := factor * maxY
 	newMaxX := factor * maxX
 
-	newImage := image.NewRGBA(image.Rect(0, 0, newMaxX, newMaxY))
-
-	// TODO: functionalize into both single thread and concurrent implementations
-	for y := 0; y < newMaxY; y++ {
-		for x := 0; x < newMaxX; x++ {
-			r, g, b, a := m.At(x/factor, y/factor).RGBA()
-			newImage.SetRGBA(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
-		}
+	var newImage image.RGBA
+	if concurrent {
+		newImage = concurrentResize(newMaxY, newMaxX, m)
+	} else {
+		newImage = singleThreadResize(newMaxY, newMaxX, m)
 	}
 
 	f, err := os.Create(outputFile)
@@ -93,9 +94,38 @@ func main() {
 	}
 	defer f.Close()
 
-	err = png.Encode(f, newImage)
+	err = png.Encode(f, &newImage)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(5)
 	}
+}
+
+// singleThreadResize resizes an Image in a single thread.
+func singleThreadResize(newMaxY int, newMaxX int, inputImage image.Image) image.RGBA {
+	fmt.Printf("Resizing...\n")
+
+	newImage := *image.NewRGBA(image.Rect(0, 0, newMaxX, newMaxY))
+	for y := 0; y < newMaxY; y++ {
+		for x := 0; x < newMaxX; x++ {
+			r, g, b, a := inputImage.At(x/factor, y/factor).RGBA()
+			newImage.SetRGBA(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
+		}
+	}
+	return newImage
+}
+
+// concurrentResize ...
+func concurrentResize(newMaxY int, newMaxX int, inputImage image.Image) image.RGBA {
+	fmt.Printf("Concurrently resizing...\n")
+	newImage := *image.NewRGBA(image.Rect(0, 0, newMaxX, newMaxY))
+	for y := 0; y < newMaxY; y++ {
+		for x := 0; x < newMaxX; x++ {
+			go func(x int, y int) {
+				r, g, b, a := inputImage.At(x/factor, y/factor).RGBA()
+				newImage.SetRGBA(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
+			}(x, y)
+		}
+	}
+	return newImage
 }

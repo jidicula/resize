@@ -116,7 +116,7 @@ func singleThreadResize(newMaxY int, newMaxX int, inputImage image.Image) image.
 	return newImage
 }
 
-// concurrentResize ...
+// concurrentResize resizes an Image concurrently
 func concurrentResize(newMaxY int, newMaxX int, inputImage image.Image) image.RGBA {
 	newImage := *image.NewRGBA(image.Rect(0, 0, newMaxX, newMaxY))
 	for y := 0; y < newMaxY; y++ {

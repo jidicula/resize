@@ -82,8 +82,10 @@ func main() {
 
 	var newImage image.RGBA
 	if concurrent {
+		fmt.Printf("Concurrently resizing...\n")
 		newImage = concurrentResize(newMaxY, newMaxX, m)
 	} else {
+		fmt.Printf("Resizing...\n")
 		newImage = singleThreadResize(newMaxY, newMaxX, m)
 	}
 
@@ -103,7 +105,6 @@ func main() {
 
 // singleThreadResize resizes an Image in a single thread.
 func singleThreadResize(newMaxY int, newMaxX int, inputImage image.Image) image.RGBA {
-	fmt.Printf("Resizing...\n")
 
 	newImage := *image.NewRGBA(image.Rect(0, 0, newMaxX, newMaxY))
 	for y := 0; y < newMaxY; y++ {
@@ -117,7 +118,6 @@ func singleThreadResize(newMaxY int, newMaxX int, inputImage image.Image) image.
 
 // concurrentResize ...
 func concurrentResize(newMaxY int, newMaxX int, inputImage image.Image) image.RGBA {
-	fmt.Printf("Concurrently resizing...\n")
 	newImage := *image.NewRGBA(image.Rect(0, 0, newMaxX, newMaxY))
 	for y := 0; y < newMaxY; y++ {
 		for x := 0; x < newMaxX; x++ {
